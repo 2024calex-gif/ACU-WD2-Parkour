@@ -1,0 +1,178 @@
+"""T17 (dive4c): final preview of the dive4b chosen case, with three changes only.
+
+  1. k_roll = 1.0 (not 1.3).
+  2. No ease to Nav_Run (the WD2 tail runs to the clip end; the rotations are not blended to the next clip).
+  3. The ground floor leaves out both hands (fingers are already out of the non-finger set) during the hand-plant window
+     plus 2 frames either side (joined time), because the hand IK pins them to the ground there. The floor still acts on
+     every other non-finger point, including the Exit feet.
+
+Everything else is dive4b: the time map, the world-space target, the Exit carry, the world metrics, the judgement.
+
+The enable state is the coordinator's preview decision: both clips are written enabled with the override text. The
+measured spec status is reported next to it, and it is not changed to hide the failures.
+
+Outputs (only under out\\dive4c): patches\\7FC9C7405.baked.json, patches\\F7919BDF0.baked.json, patches\\mapping_dive4c.json,
+joined_sheet.png, joined_sheet.gif, report.md, summary.json.
+Run: python dive4c.py
+"""
+import json
+import os
+import sys
+import zlib
+
+import numpy as np
+
+import bake2
+import config
+import dive4 as D4
+import dive4b as B
+import dive_chain2 as DC2
+
+OUT_DIR = os.path.join(config.OUT, 'dive4c')
+PATCH_DIR = os.path.join(OUT_DIR, 'patches')
+MAPPING = os.path.join(PATCH_DIR, 'mapping_dive4c.json')
+REPORT = os.path.join(OUT_DIR, 'report.md')
+SUMMARY = os.path.join(OUT_DIR, 'summary.json')
+SHEET_PNG = os.path.join(OUT_DIR, 'joined_sheet.png')
+SHEET_GIF = os.path.join(OUT_DIR, 'joined_sheet.gif')
+
+T_TO, S_SCALE, SHIFT, K_ROLL = 0.65, 1.17, 0.08, 1.0
+OVERRIDE = 'preview: in-game test of dive roll on low wall'
+PAD = 2.0 / 60.0                          # s, the hand-plant window padding on each side (2 frames)
+HAND_NAMES = ('LeftHand', 'RightHand')
+
+
+def plant_window_joined(T_to):
+    """Joined (played) time of the hand plant, WD2 0.75 .. 0.92 s mapped at k = 1, padded by 2 frames."""
+    t0 = T_to + (B.W_PLANT[0] - B.W_TAKEOFF)
+    t1 = T_to + (B.W_PLANT[1] - B.W_TAKEOFF)
+    return t0 - PAD, t1 + PAD
+
+
+def make_need_samples(ctx, T_to):
+    """need_samples of dive4b, but the hands are left out of the floor inside the plant window (joined time)."""
+    hands = {ctx.rig.ac_by_hash[zlib.crc32(h.encode())] for h in HAND_NAMES}
+    keep = np.array([b not in hands for b in ctx.body_nf])
+    lo, hi = plant_window_joined(T_to)
+
+    def need_samples(ctx_, res):
+        taus, needs = [], []
+        for seg, fin, win, is_exit in ((res['seg_S'], res['fin_S'], res['win_S'], False),
+                                       (res['seg_E'], res['fin_E'], res['win_E'], True)):
+            P = B.D3._world(seg['seq'], seg['dump'], fin['final'], fin['ref_out'], fin['disp'])
+            pts_all = P[win][:, ctx.body_nf]
+            need_all = bake2.lift_need(pts_all, ctx.ob)
+            need_nh = bake2.lift_need(pts_all[:, keep], ctx.ob)
+            tau = np.asarray(win, float) / D4.FPS
+            if is_exit:
+                tau = ctx.t_W + (tau - D4.EXIT_O) / D4.EXIT_R
+            in_plant = (tau >= lo - 1e-9) & (tau <= hi + 1e-9)
+            taus.append(tau)
+            needs.append(np.where(in_plant, need_nh, need_all))
+        return np.concatenate(taus), np.concatenate(needs)
+
+    return need_samples
+
+
+def run():
+    ctx = D4.Ctx()
+    case = B.Case(T_TO, S_SCALE, SHIFT, K_ROLL)
+    original = B.need_samples
+    B.need_samples = make_need_samples(ctx, T_TO)
+    try:
+        res = B.bake_with_floor(ctx, case, ease=False, floor=True)
+    finally:
+        B.need_samples = original
+    st = B.judge(res)
+    return ctx, case, res, st
+
+
+def write_outputs(ctx, res):
+    os.makedirs(PATCH_DIR, exist_ok=True)
+    DC2.write_patch(os.path.join(PATCH_DIR, D4.SO_HEX + '.baked.json'), ctx.rig, res['fin_S']['rot_tracks'],
+                    res['fin_S']['trans_keys'], None, ctx.so['dump']['Length'])
+    DC2.write_patch(os.path.join(PATCH_DIR, D4.EXIT_HEX + '.baked.json'), ctx.rig, res['fin_E']['rot_tracks'],
+                    res['fin_E']['trans_keys'], None, ctx.ex_dump['Length'])
+    mapping = dict(clips=[
+        DC2.mapping_entry(D4.SO_HEX, D4.SO_NAME, D4.SO_HEX + '.baked.json', True, override=OVERRIDE),
+        DC2.mapping_entry(D4.EXIT_HEX, D4.EXIT_NAME, D4.EXIT_HEX + '.baked.json', True,
+                          only_after=[D4.SO_NAME], override=OVERRIDE),
+    ])
+    with open(MAPPING, 'w', encoding='utf-8') as f:
+        json.dump(mapping, f, indent=1)
+    return mapping
+
+
+def write_sheet(ctx, res):
+    orig = (B.SHEET_PNG, B.SHEET_GIF)
+    B.SHEET_PNG, B.SHEET_GIF = SHEET_PNG, SHEET_GIF
+    try:
+        B.write_sheet(ctx, res)
+    finally:
+        B.SHEET_PNG, B.SHEET_GIF = orig
+
+
+def write_report(ctx, case, res, st):
+    mS, mE, w = res['met_S'], res['met_E'], res['world']
+    lines = [
+        '# T17 dive4c: final preview of the dive4b chosen case',
+        '',
+        'Generated by `v2/pipeline/dive4c.py` from `dive4b.py`. Written only under `out\\dive4c`.',
+        '',
+        'Changes from dive4b: k_roll 1.0 (was 1.3); no ease to Nav_Run (WD2 tail to the clip end); the ground floor leaves '
+        'out both hands during the hand-plant window (WD2 0.75 .. 0.92 s, joined time) plus 2 frames either side.',
+        '',
+        'Case: T_to %.2f s, s %.2f, shift %+.2f m, k_roll %.1f.' % (case.T_to, case.s, case.shift, case.k_roll),
+        '',
+        '## Enable state (coordinator preview)',
+        '',
+        'Both clips are written **enabled: true** with the override "%s", as requested. The measured spec status below is '
+        'reported as it is: SlideOver **%s**, Exit **%s**.' % (OVERRIDE, st['S']['status'], st['E']['status']),
+        '',
+        'Spec fails: %s' % ('; '.join(st['S']['fails']) or 'none'),
+        '',
+        '## Validation',
+        '',
+        '| metric | SlideOver | Exit | rule |',
+        '|---|---|---|---|',
+        '| non-finger penetration, box / ground (cm) | %.1f / %.1f | %.1f / %.1f | <= 5 |'
+        % (mS['pen_box_cm'], mS['pen_ground_cm'], mE['pen_box_cm'], mE['pen_ground_cm']),
+        '| hand touch (frames, min) | %d | n/a | >= 4 |' % mS['touch']['min'],
+        '| world pelvis: step cm/frame / dv m/s per frame / accel cm/frame^2 | %.2f / %.2f / %.2f | joined | <= 12 / 1.5 |'
+        % (w['pelvis']['step_cm'], w['pelvis']['dv_ms'], w['pelvis']['acc_cm']),
+        '| world head: step cm/frame / dv m/s per frame / accel cm/frame^2 | %.2f / %.2f / %.2f | joined | <= 12 / 1.5 |'
+        % (w['head']['step_cm'], w['head']['dv_ms'], w['head']['acc_cm']),
+        '| Reference offset max (m) | %.3f | | <= 1.0 |' % w['offset_max_m'],
+        '| continuity at W (deg) | %.1f (%s) | | <= 45 |' % (res['cont']['max_deg'], res['cont']['worst']),
+        '| floor residual / lift max (cm) | %.2f / %.1f | | info |' % (res['floor_residual_cm'], res['lift_max_cm']),
+        '| pre-ease gap to Nav_Run (deg) | | %.1f | no ease applied |' % res['gap_pre']['max_deg'],
+        '',
+        'Floor iterations (need before each update, cm): %s.' % ', '.join('%.1f' % h['need_max_cm'] for h in res['floor_hist']),
+        '',
+    ]
+    with open(REPORT, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
+
+
+def main(argv=None):
+    ctx, case, res, st = run()
+    os.makedirs(OUT_DIR, exist_ok=True)
+    mapping = write_outputs(ctx, res)
+    write_sheet(ctx, res)
+    write_report(ctx, case, res, st)
+    summary = dict(case=dict(T_to=case.T_to, s=case.s, shift=case.shift, k_roll=case.k_roll),
+                   spec_status=st, world=dict((k, v) for k, v in res['world'].items() if not k.startswith('_')),
+                   met_S={k: v for k, v in res['met_S'].items() if isinstance(v, (int, float))},
+                   met_E={k: v for k, v in res['met_E'].items() if isinstance(v, (int, float))},
+                   touch=res['met_S']['touch'], cont=res['cont']['max_deg'], floor_residual_cm=res['floor_residual_cm'],
+                   lift_max_cm=res['lift_max_cm'], floor_hist=res['floor_hist'], mapping=mapping)
+    with open(SUMMARY, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, indent=1, default=float)
+    print(json.dumps(dict(S=st['S']['status'], E=st['E']['status'], touch=res['met_S']['touch']['min'],
+                          pelvis_step=res['world']['pelvis']['step_cm'], head_step=res['world']['head']['step_cm'],
+                          dv=res['world']['dv_ms'], floor=res['floor_residual_cm'])))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

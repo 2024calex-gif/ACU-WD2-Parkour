@@ -1,0 +1,31 @@
+{
+  "_note": "Hand-annotated for the Sprint SlideOver speed vaults (speedvault.py), 2026-10-10. Times in seconds of the WD2 clip. Source: pelvis-relative effector traces (wd2events.effector_traces) and the stick sheets out/speedvault/sheets/wd2_stick_*.png. Accuracy about +-0.03 s (ground contact is judged from the pelvis-relative foot height, which varies with stance). planting_hand = the only hand that touches the obstacle top; the other hand is free (no pin).",
+  "speed_1m_100cm": {
+    "stem": "a00-000-00_vaultover-sprint-100cm-long-vaultover_male_000f_norm_nowep",
+    "target": "xx_Parkour_Sprint_SlideOver_Fd100cm-Up100cm",
+    "static_until": 0.0,
+    "takeoff": 0.92,
+    "hand_plant_start": 1.08,
+    "hand_plant_end": 1.32,
+    "hands_on": "top",
+    "planting_hand": "LeftHand",
+    "landing": 1.42,
+    "landing_foot": "LeftFoot",
+    "next_step": 1.62,
+    "comment": "Takeoff: both feet leave the ground about 0.92 s (left foot -0.71 m, right -0.23 m at 0.93 s, rising after). Left hand drops to 0.13-0.29 m below the pelvis and stays there 1.08-1.32 s (planted on the top, 1.0 m); feet tuck to pelvis height at 1.20 s. Left foot lands first (-0.63 m at 1.40 s, -0.83 m at 1.47 s), feet down 1.42 s. Trunk tilt peaks at about 62 deg at 1.2 s. Takeoff->landing 0.50 s (ACU: 0.70 s)."
+  },
+  "speed_2m_100cm": {
+    "stem": "a00-000-00_vaultover-sprint-200cm-long-vaultover_male_000f_norm_nowep",
+    "target": "xx_Parkour_Sprint_SlideOver_Fd200cm-Up100cm",
+    "static_until": 0.0,
+    "takeoff": 0.90,
+    "hand_plant_start": 0.97,
+    "hand_plant_end": 1.12,
+    "hands_on": "top",
+    "planting_hand": "LeftHand",
+    "landing": 1.42,
+    "landing_foot": "LeftFoot",
+    "next_step": 1.62,
+    "comment": "Takeoff: feet leave the ground about 0.90 s (left -0.19 m at 0.90 s, rising). Left hand near pelvis height (-0.13 to +0.14 m) 0.97-1.17 s, the plant on the top; right hand higher (0.2-0.5 m). Trunk upright (tilt <= 45 deg). Left foot lands first (-0.42 m at 1.43 s, -0.64 m at 1.50 s), feet down 1.42 s. Takeoff->landing 0.52 s (ACU: 0.98 s)."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "_note": "Hand-annotated by the orchestrator (2026-10-08) from v2/out/sheets/wd2_<stem>.png: pelvis-relative z and forward velocity per effector + stick figures. Times in seconds of the WD2 clip. 'hands_on' = surface the hands touch ('top' = obstacle top, 'ground' = ground beyond the obstacle). Accuracy about +-0.05 s.",
+  "catpass_kong": {
+    "stem": "b00-000-00_vaultover-kong_mplyr_000f_norm_nowep",
+    "static_until": 0.75,
+    "takeoff": 1.13,
+    "hand_plant_start": 1.22,
+    "hand_plant_end": 1.52,
+    "hands_on": "top",
+    "landing": 1.78,
+    "landing_foot": "RightFoot",
+    "next_step": 1.97,
+    "comment": "Hands go 0.5 m below the pelvis while planted (body passes over them). Takeoff->landing 0.65 s, close to ACU SkipOver Fd100-Up100 (0.68 s)."
+  },
+  "diveroll_frontdive": {
+    "stem": "a00-000-00_vaultover-sprint-100cm-long-frontdive_male_000f_norm_nowep",
+    "takeoff": 0.45,
+    "hand_plant_start": 0.75,
+    "hand_plant_end": 0.92,
+    "hands_on": "ground",
+    "roll": [0.92, 1.18],
+    "landing": 1.2,
+    "landing_foot": "LeftFoot",
+    "next_step": 1.6,
+    "comment": "Dive: feet go ~0.75 m ABOVE the pelvis (inverted) at 0.8-1.05 s, hands land on the ground beyond the obstacle, forward roll, feet down at 1.2 s, run-out from ~1.6 s. Takeoff->feet down 0.75 s."
+  }
+}

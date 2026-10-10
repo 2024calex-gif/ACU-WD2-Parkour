@@ -1,0 +1,14 @@
+# Game-derived data stays local (extracted / decoded from the games, personal use only)
+data/acu_dumps/
+data/captures/
+data/game_logs/
+data/clipnames_parkour.tsv
+dist/
+out/**
+!out/**/
+!out/**/*.md
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
