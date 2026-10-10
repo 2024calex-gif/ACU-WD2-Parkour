@@ -18,7 +18,7 @@ Reuses the proven v1 modules in `..\..\tools\` (unchanged logic) and replaces th
 ## Running the tests
 
 ```
-python -m pytest "C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\pipeline\tests" -q
+python -m pytest "pipeline\tests" -q
 ```
 
 Needs Python 3.12, numpy and pytest (`python -m pip install pytest`). The tests only read files; they never touch the game folder.
@@ -162,8 +162,8 @@ Bakes the WD2 `catpass_kong` motion (`..\data\wd2_events.json`, entry `catpass_k
 Run (writes patches, mapping, PNGs, report):
 
 ```
-python "C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\pipeline\bake2.py"
-python "C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\pipeline\bake2.py" --diagnostic   # take-off..landing window, writes diagnostic.md only
+python "pipeline\bake2.py"
+python "pipeline\bake2.py" --diagnostic   # take-off..landing window, writes diagnostic.md only
 ```
 
 Outputs: `..\out\patches\<HEX>.baked.json` x10 + `mapping.json` (10 entries only); `..\out\bake2\<clip>.png`, `report.md`, `diagnostic.md`, `observations.md` (hand-written, see there). The play model used is printed into `report.md`.

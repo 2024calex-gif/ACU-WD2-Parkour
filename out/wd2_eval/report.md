@@ -159,8 +159,8 @@ Low detection confidence (scores shown, check the events by hand before use): b0
 
 ## Files
 
-- report: `C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\out\wd2_eval\report.md`
-- summary: `C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\out\wd2_eval\summary.json`
-- sheets: `C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\out\wd2_eval\sheets` (one per clip, wd2_<stem>.png)
-- module: `C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\pipeline\wd2_eval.py`
-- tests: `C:\Users\2024c\Documents\Game Mods\WD2-Vault-Port\v2\pipeline\tests\test_wd2_eval.py`
+- report: `out\wd2_eval\report.md`
+- summary: `out\wd2_eval\summary.json`
+- sheets: `out\wd2_eval\sheets` (one per clip, wd2_<stem>.png)
+- module: `pipeline\wd2_eval.py`
+- tests: `pipeline\tests\test_wd2_eval.py`
